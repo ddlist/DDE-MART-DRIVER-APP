@@ -74,6 +74,13 @@ class JobsApi {
     await _dio.post('/driver/availability', data: {'is_online': online});
   }
 
+  Future<void> location({required double latitude, required double longitude}) async {
+    await _dio.post('/driver/location', data: {
+      'latitude': latitude,
+      'longitude': longitude,
+    });
+  }
+
   Future<Map<String, dynamic>> profile() async {
     final response = await _dio.get('/driver/profile');
     return Map<String, dynamic>.from((response.data as Map)['data'] as Map);

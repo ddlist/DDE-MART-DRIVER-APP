@@ -175,6 +175,8 @@ class DriverProfileScreen extends ConsumerWidget {
                     }
                   : null,
             ),
+            const SizedBox(height: 8),
+            const _LocationPing(),
             const SizedBox(height: 16),
             FilledButton.tonal(
               onPressed: () async {
@@ -191,6 +193,99 @@ class DriverProfileScreen extends ConsumerWidget {
           ],
         );
       },
+    );
+  }
+}
+
+/// Manual position ping (GPS auto-fill lands with the location plugin).
+/// Fresh coordinates keep auto-dispatch offers coming.
+class _LocationPing extends ConsumerStatefulWidget {
+  const _LocationPing();
+
+  @override
+  ConsumerState<_LocationPing> createState() => _LocationPingState();
+}
+
+class _LocationPingState extends ConsumerState<_LocationPing> {
+  final _lat = TextEditingController();
+  final _lng = TextEditingController();
+  bool _busy = false;
+
+  @override
+  void dispose() {
+    _lat.dispose();
+    _lng.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text('My position', style: Theme.of(context).textTheme.titleSmall),
+            Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _lat,
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true,
+                      signed: true,
+                    ),
+                    decoration: const InputDecoration(labelText: 'Lat'),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: TextField(
+                    controller: _lng,
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true,
+                      signed: true,
+                    ),
+                    decoration: const InputDecoration(labelText: 'Lng'),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            FilledButton.tonal(
+              onPressed: _busy
+                  ? null
+                  : () async {
+                      final lat = double.tryParse(_lat.text.trim());
+                      final lng = double.tryParse(_lng.text.trim());
+                      if (lat == null || lng == null) return;
+                      setState(() => _busy = true);
+                      try {
+                        await ref.read(jobsApiProvider).location(
+                              latitude: lat,
+                              longitude: lng,
+                            );
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Position updated.')),
+                          );
+                        }
+                      } catch (e) {
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text(apiMessage(e))),
+                          );
+                        }
+                      } finally {
+                        if (mounted) setState(() => _busy = false);
+                      }
+                    },
+              child: Text(_busy ? 'Sending…' : 'Update position'),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
