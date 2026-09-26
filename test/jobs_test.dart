@@ -26,23 +26,35 @@ void main() {
   });
 
   group('nextMove', () {
-    DriverJob job(String status) => DriverJob(
-          type: 'ride',
+    DriverJob job(String type, String status) => DriverJob(
+          type: type,
           id: 1,
-          number: 'CAB-1',
+          number: 'JOB-1',
           status: status,
           total: 100,
         );
 
     test('pool jobs accept', () {
-      expect(nextMove(job('placed'), owned: false), 'accepted');
+      expect(nextMove(job('ride', 'placed'), owned: false), 'accepted');
     });
 
-    test('owned jobs advance, terminal jobs rest', () {
-      expect(nextMove(job('accepted'), owned: true), 'ongoing');
-      expect(nextMove(job('ongoing'), owned: true), 'completed');
-      expect(nextMove(job('completed'), owned: true), isNull);
-      expect(nextMove(job('cancelled'), owned: true), isNull);
+    test('food and parcel ship, then complete', () {
+      expect(nextMove(job('food', 'accepted'), owned: true), 'shipped');
+      expect(nextMove(job('parcel', 'accepted'), owned: true), 'shipped');
+      expect(nextMove(job('food', 'shipped'), owned: true), 'completed');
+      expect(nextMove(job('parcel', 'shipped'), owned: true), 'completed');
+    });
+
+    test('rental and rides go ongoing, then complete', () {
+      expect(nextMove(job('rental', 'accepted'), owned: true), 'ongoing');
+      expect(nextMove(job('ride', 'accepted'), owned: true), 'ongoing');
+      expect(nextMove(job('rental', 'ongoing'), owned: true), 'completed');
+      expect(nextMove(job('ride', 'ongoing'), owned: true), 'completed');
+    });
+
+    test('terminal jobs rest', () {
+      expect(nextMove(job('food', 'completed'), owned: true), isNull);
+      expect(nextMove(job('ride', 'cancelled'), owned: true), isNull);
     });
   });
 }

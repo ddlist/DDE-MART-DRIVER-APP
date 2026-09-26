@@ -96,12 +96,17 @@ final jobsProvider = FutureProvider<JobsBundle>((ref) async {
 });
 
 /// Next legal move shown per job: pool jobs can be accepted; owned jobs move
-/// accepted → ongoing → completed.
+/// along their own machine (food/parcel ship, rental/rides go ongoing).
 String? nextMove(DriverJob job, {required bool owned}) {
   if (!owned) return 'accepted';
-  return switch (job.status) {
-    'accepted' => 'ongoing',
-    'ongoing' => 'completed',
+  return switch ((job.type, job.status)) {
+    ('food', 'accepted') || ('parcel', 'accepted') => 'shipped',
+    ('rental', 'accepted') || ('ride', 'accepted') => 'ongoing',
+    ('food', 'shipped') ||
+    ('parcel', 'shipped') ||
+    ('rental', 'ongoing') ||
+    ('ride', 'ongoing') =>
+      'completed',
     _ => null,
   };
 }
