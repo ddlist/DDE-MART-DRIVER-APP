@@ -134,10 +134,53 @@ class _JobsScreenState extends ConsumerState<JobsScreen> {
 
   Widget _tile(DriverJob job, {required bool owned}) {
     final move = _busy ? null : nextMove(job, owned: owned);
+    final icon = switch (job.type) {
+      'parcel' => Icons.local_shipping_outlined,
+      'rental' => Icons.car_rental_outlined,
+      'ride' => Icons.local_taxi_outlined,
+      _ => Icons.fastfood_outlined,
+    };
+    final statusColor = switch (job.status) {
+      'placed' => Colors.orange,
+      'accepted' => Colors.blue,
+      'ongoing' => Colors.purple,
+      'completed' => Colors.green,
+      _ => Colors.grey,
+    };
+
     return Card(
+      clipBehavior: Clip.antiAlias,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
       child: ListTile(
-        title: Text('${job.type.toUpperCase()} · ${job.number}'),
-        subtitle: Text('${job.status} · ${job.total.toStringAsFixed(2)}'),
+        leading: CircleAvatar(
+          backgroundColor: Theme.of(context).colorScheme.primaryContainer,
+          child: Icon(icon, color: Theme.of(context).colorScheme.onPrimaryContainer),
+        ),
+        title: Text(
+          '${job.type.toUpperCase()} · ${job.number}',
+          style: const TextStyle(fontWeight: FontWeight.w700),
+        ),
+        subtitle: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+              decoration: BoxDecoration(
+                color: statusColor.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Text(
+                job.status.toUpperCase(),
+                style: TextStyle(
+                  color: statusColor,
+                  fontSize: 11,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Text(job.total.toStringAsFixed(2)),
+          ],
+        ),
         trailing: move == null
             ? null
             : FilledButton(
