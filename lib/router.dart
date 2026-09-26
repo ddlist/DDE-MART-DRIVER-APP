@@ -12,6 +12,7 @@ import 'core/config.dart';
 import 'core/gate.dart';
 import 'features/account/safety_profile.dart';
 import 'features/auth/driver_login_screen.dart';
+import 'features/documents/documents.dart';
 import 'features/jobs/jobs.dart';
 import 'features/payouts/payouts.dart';
 
@@ -65,6 +66,7 @@ final routerProvider = Provider<GoRouter>((ref) {
         routes: [
           GoRoute(path: '/jobs', builder: (context, state) => const JobsScreen()),
           GoRoute(path: '/payouts', builder: (context, state) => const PayoutsScreen()),
+          GoRoute(path: '/documents', builder: (context, state) => const DocumentsScreen()),
           GoRoute(path: '/sos', builder: (context, state) => const SosScreen()),
           GoRoute(path: '/profile', builder: (context, state) => const DriverProfileScreen()),
         ],
@@ -88,10 +90,12 @@ class DriverShell extends StatelessWidget {
     int index = 0;
     if (location.startsWith('/payouts')) {
       index = 1;
-    } else if (location.startsWith('/sos')) {
+    } else if (location.startsWith('/documents')) {
       index = 2;
-    } else if (location.startsWith('/profile')) {
+    } else if (location.startsWith('/sos')) {
       index = 3;
+    } else if (location.startsWith('/profile')) {
+      index = 4;
     }
 
     return Scaffold(
@@ -105,14 +109,17 @@ class DriverShell extends StatelessWidget {
             case 1:
               context.go('/payouts');
             case 2:
-              context.go('/sos');
+              context.go('/documents');
             case 3:
+              context.go('/sos');
+            case 4:
               context.go('/profile');
           }
         },
         destinations: const [
           NavigationDestination(icon: Icon(Icons.work_outline), label: 'Jobs'),
           NavigationDestination(icon: Icon(Icons.payments_outlined), label: 'Payouts'),
+          NavigationDestination(icon: Icon(Icons.badge_outlined), label: 'Docs'),
           NavigationDestination(icon: Icon(Icons.sos_outlined), label: 'SOS'),
           NavigationDestination(icon: Icon(Icons.person_outline), label: 'Profile'),
         ],
