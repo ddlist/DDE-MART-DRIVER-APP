@@ -26,6 +26,11 @@ class DdeDriverApp extends ConsumerWidget {
         colorSchemeSeed: const Color(0xFF1D4ED8),
         useMaterial3: true,
       ),
+      darkTheme: ThemeData(
+        colorSchemeSeed: const Color(0xFF1D4ED8),
+        brightness: Brightness.dark,
+        useMaterial3: true,
+      ),
       routerConfig: router,
     );
   }

@@ -7,6 +7,7 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/api_client.dart';
@@ -227,6 +228,40 @@ class _LocationPingState extends ConsumerState<_LocationPing> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Text('My position', style: Theme.of(context).textTheme.titleSmall),
+            OutlinedButton.icon(
+              icon: const Icon(Icons.my_location_outlined),
+              label: const Text('Fill from GPS'),
+              onPressed: _busy
+                  ? null
+                  : () async {
+                      var permission = await Geolocator.checkPermission();
+                      if (permission == LocationPermission.denied) {
+                        permission = await Geolocator.requestPermission();
+                      }
+                      if (permission == LocationPermission.denied ||
+                          permission == LocationPermission.deniedForever) {
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Location permission denied.'),
+                            ),
+                          );
+                        }
+                        return;
+                      }
+                      try {
+                        final position = await Geolocator.getCurrentPosition();
+                        _lat.text = '${position.latitude}';
+                        _lng.text = '${position.longitude}';
+                      } catch (_) {
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Could not fix location.')),
+                          );
+                        }
+                      }
+                    },
+            ),
             Row(
               children: [
                 Expanded(

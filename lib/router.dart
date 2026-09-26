@@ -12,6 +12,7 @@ import 'core/config.dart';
 import 'core/gate.dart';
 import 'features/account/safety_profile.dart';
 import 'features/auth/driver_login_screen.dart';
+import 'features/chat/driver_chat.dart';
 import 'features/documents/documents.dart';
 import 'features/jobs/jobs.dart';
 import 'features/payouts/payouts.dart';
@@ -67,6 +68,13 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(path: '/jobs', builder: (context, state) => const JobsScreen()),
           GoRoute(path: '/payouts', builder: (context, state) => const PayoutsScreen()),
           GoRoute(path: '/documents', builder: (context, state) => const DocumentsScreen()),
+          GoRoute(path: '/chat', builder: (context, state) => const DriverChatThreadsScreen()),
+          GoRoute(
+            path: '/chat/:id',
+            builder: (context, state) => DriverChatThreadScreen(
+              threadId: int.parse(state.pathParameters['id']!),
+            ),
+          ),
           GoRoute(path: '/sos', builder: (context, state) => const SosScreen()),
           GoRoute(path: '/profile', builder: (context, state) => const DriverProfileScreen()),
         ],
@@ -92,10 +100,12 @@ class DriverShell extends StatelessWidget {
       index = 1;
     } else if (location.startsWith('/documents')) {
       index = 2;
-    } else if (location.startsWith('/sos')) {
+    } else if (location.startsWith('/chat')) {
       index = 3;
-    } else if (location.startsWith('/profile')) {
+    } else if (location.startsWith('/sos')) {
       index = 4;
+    } else if (location.startsWith('/profile')) {
+      index = 5;
     }
 
     return Scaffold(
@@ -111,8 +121,10 @@ class DriverShell extends StatelessWidget {
             case 2:
               context.go('/documents');
             case 3:
-              context.go('/sos');
+              context.go('/chat');
             case 4:
+              context.go('/sos');
+            case 5:
               context.go('/profile');
           }
         },
@@ -120,6 +132,7 @@ class DriverShell extends StatelessWidget {
           NavigationDestination(icon: Icon(Icons.work_outline), label: 'Jobs'),
           NavigationDestination(icon: Icon(Icons.payments_outlined), label: 'Payouts'),
           NavigationDestination(icon: Icon(Icons.badge_outlined), label: 'Docs'),
+          NavigationDestination(icon: Icon(Icons.chat_outlined), label: 'Chat'),
           NavigationDestination(icon: Icon(Icons.sos_outlined), label: 'SOS'),
           NavigationDestination(icon: Icon(Icons.person_outline), label: 'Profile'),
         ],
