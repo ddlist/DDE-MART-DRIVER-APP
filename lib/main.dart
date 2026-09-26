@@ -3,6 +3,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'core/push.dart';
 import 'router.dart';
 
 void main() {
@@ -15,6 +16,8 @@ class DdeDriverApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final router = ref.watch(routerProvider);
+    // Instantiates the session watcher; syncs push once per sign-in.
+    ref.watch(pushSyncProvider);
 
     return MaterialApp.router(
       title: 'DDE Driver',

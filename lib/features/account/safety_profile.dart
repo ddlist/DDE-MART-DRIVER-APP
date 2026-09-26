@@ -11,6 +11,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../core/api_client.dart';
 import '../../core/auth_store.dart';
+import '../../core/push.dart';
 import '../auth/driver_auth_api.dart';
 import '../jobs/jobs.dart';
 
@@ -180,6 +181,7 @@ class DriverProfileScreen extends ConsumerWidget {
                 try {
                   await ref.read(driverAuthApiProvider).logout();
                 } finally {
+                  await ref.read(pushServiceProvider).unregister();
                   await ref.read(authStoreProvider.notifier).signOut();
                   if (context.mounted) context.go('/login');
                 }
