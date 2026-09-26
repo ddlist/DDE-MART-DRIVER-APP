@@ -150,7 +150,21 @@ class DriverProfileScreen extends ConsumerWidget {
             ),
             Text('${profile?['phone'] ?? auth.phone ?? ''}'),
             Text('Status: ${profile?['status'] ?? '…'}'),
-            const SizedBox(height: 16),
+            if ('${profile?['vehicle_info'] ?? ''}'.isNotEmpty)
+              Text('Vehicle: ${profile?['vehicle_info']}'),
+            const SizedBox(height: 8),
+            OutlinedButton.icon(
+              icon: const Icon(Icons.edit_outlined),
+              label: const Text('Edit name & vehicle'),
+              onPressed: () => context.push('/profile/edit'),
+            ),
+            const SizedBox(height: 8),
+            OutlinedButton.icon(
+              icon: const Icon(Icons.help_outline),
+              label: const Text('Help & policies'),
+              onPressed: () => context.push('/pages'),
+            ),
+            const SizedBox(height: 8),
             SwitchListTile(
               title: const Text('Online for jobs'),
               value: online,
@@ -194,6 +208,92 @@ class DriverProfileScreen extends ConsumerWidget {
           ],
         );
       },
+    );
+  }
+}
+
+/// Edit name + vehicle info (PUT /driver/profile).
+class EditDriverProfileScreen extends ConsumerStatefulWidget {
+  const EditDriverProfileScreen({super.key});
+
+  @override
+  ConsumerState<EditDriverProfileScreen> createState() =>
+      _EditDriverProfileScreenState();
+}
+
+class _EditDriverProfileScreenState
+    extends ConsumerState<EditDriverProfileScreen> {
+  final _name = TextEditingController();
+  final _vehicle = TextEditingController();
+  bool _busy = false;
+  bool _loaded = false;
+
+  @override
+  void dispose() {
+    _name.dispose();
+    _vehicle.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Edit profile')),
+      body: FutureBuilder<Map<String, dynamic>>(
+        future: ref.watch(jobsApiProvider).profile(),
+        builder: (context, snapshot) {
+          if (snapshot.hasData && !_loaded) {
+            _name.text = '${snapshot.data!['name'] ?? ''}';
+            _vehicle.text = '${snapshot.data!['vehicle_info'] ?? ''}';
+            _loaded = true;
+          }
+          return ListView(
+            padding: const EdgeInsets.all(20),
+            children: [
+              TextField(
+                controller: _name,
+                textCapitalization: TextCapitalization.words,
+                decoration: const InputDecoration(
+                  labelText: 'Name',
+                  prefixIcon: Icon(Icons.person_outlined),
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: _vehicle,
+                decoration: const InputDecoration(
+                  labelText: 'Vehicle (e.g. Honda CD70 · KHI-1234)',
+                  prefixIcon: Icon(Icons.two_wheeler_outlined),
+                ),
+              ),
+              const SizedBox(height: 20),
+              FilledButton(
+                onPressed: _busy
+                    ? null
+                    : () async {
+                        setState(() => _busy = true);
+                        final messenger = ScaffoldMessenger.of(context);
+                        final router = GoRouter.of(context);
+                        try {
+                          await ref.read(jobsApiProvider).updateProfile(
+                                name: _name.text.trim(),
+                                vehicleInfo: _vehicle.text.trim(),
+                              );
+                          router.pop();
+                        } catch (e) {
+                          messenger.showSnackBar(
+                            SnackBar(content: Text(apiMessage(e))),
+                          );
+                        } finally {
+                          if (mounted) setState(() => _busy = false);
+                        }
+                      },
+                child: Text(_busy ? 'Saving…' : 'Save changes'),
+              ),
+],
+          );
+        },
+      ),
     );
   }
 }

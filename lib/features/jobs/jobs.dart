@@ -7,6 +7,7 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../core/api_client.dart';
 
@@ -74,6 +75,14 @@ class JobsApi {
     await _dio.post('/driver/availability', data: {'is_online': online});
   }
 
+  Future<void> updateProfile({String? name, String? vehicleInfo}) async {
+    // ignore: use_null_aware_operator
+    await _dio.put('/driver/profile', data: {
+      if (name case final n?) 'name': n,
+      if (vehicleInfo case final v?) 'vehicle_info': v,
+    });
+  }
+
   Future<void> location({required double latitude, required double longitude}) async {
     await _dio.post('/driver/location', data: {
       'latitude': latitude,
@@ -137,8 +146,7 @@ class _JobsScreenState extends ConsumerState<JobsScreen> {
     }
   }
 
-  Widget _tile(DriverJob job, {required bool owned}) {
-    final move = _busy ? null : nextMove(job, owned: owned);
+  Widget _tile(DriverJob job, {required bool owned}) {    final move = _busy ? null : nextMove(job, owned: owned);
     final icon = switch (job.type) {
       'parcel' => Icons.local_shipping_outlined,
       'rental' => Icons.car_rental_outlined,
@@ -187,7 +195,7 @@ class _JobsScreenState extends ConsumerState<JobsScreen> {
           ],
         ),
         trailing: move == null
-            ? null
+            ? const Icon(Icons.chevron_right)
             : FilledButton(
                 onPressed: () => owned
                     ? _run(
@@ -205,6 +213,7 @@ class _JobsScreenState extends ConsumerState<JobsScreen> {
                       ),
                 child: Text(owned ? move : 'Accept'),
               ),
+        onTap: () => context.push('/job-detail', extra: (job, owned)),
       ),
     );
   }
@@ -244,6 +253,134 @@ class _JobsScreenState extends ConsumerState<JobsScreen> {
             for (final job in bundle.pool) _tile(job, owned: false),
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// Job detail: big status, fare, and the single next action.
+/// Route addresses land with the tracking upgrade; until then the list
+/// assignment plus these moves cover the whole driver flow.
+class JobDetailScreen extends ConsumerStatefulWidget {
+  const JobDetailScreen({super.key, required this.job, required this.owned});
+
+  final DriverJob job;
+  final bool owned;
+
+  @override
+  ConsumerState<JobDetailScreen> createState() => _JobDetailScreenState();
+}
+
+class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
+  bool _busy = false;
+  late DriverJob _job = widget.job;
+
+  Future<void> _move(String to) async {
+    setState(() => _busy = true);
+    final messenger = ScaffoldMessenger.of(context);
+    final router = GoRouter.of(context);
+    try {
+      await ref.read(jobsApiProvider).transition(
+            type: _job.type,
+            id: _job.id,
+            to: to,
+          );
+      ref.invalidate(jobsProvider);
+      setState(() {
+        _job = DriverJob(
+          type: _job.type,
+          id: _job.id,
+          number: _job.number,
+          status: to,
+          total: _job.total,
+        );
+      });
+      if (to == 'completed') router.pop();
+    } catch (e) {
+      messenger.showSnackBar(SnackBar(content: Text(apiMessage(e))));
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  Future<void> _accept() async {
+    setState(() => _busy = true);
+    final messenger = ScaffoldMessenger.of(context);
+    final router = GoRouter.of(context);
+    try {
+      await ref.read(jobsApiProvider).accept(type: _job.type, id: _job.id);
+      ref.invalidate(jobsProvider);
+      router.pop();
+    } catch (e) {
+      messenger.showSnackBar(SnackBar(content: Text(apiMessage(e))));
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final owned = widget.owned;
+    final move = _busy ? null : nextMove(_job, owned: owned);
+
+    return Scaffold(
+      appBar: AppBar(title: Text(_job.number)),
+      body: ListView(
+        padding: const EdgeInsets.all(20),
+        children: [
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    _job.type.toUpperCase(),
+                    style: Theme.of(context).textTheme.labelLarge,
+                  ),
+                  Text(
+                    _job.number,
+                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                          fontWeight: FontWeight.w800,
+                        ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    _job.status.toUpperCase(),
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.primary,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Fare ${_job.total.toStringAsFixed(2)}',
+                    style: Theme.of(context).textTheme.titleLarge,
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+          if (move != null)
+            FilledButton(
+              onPressed: _busy
+                  ? null
+                  : () => owned ? _move(move) : _accept(),
+              child: Text(
+                _busy
+                    ? 'Working…'
+                    : owned
+                        ? 'Mark $move'
+                        : 'Accept job',
+              ),
+            )
+          else
+            const Text(
+              'Nothing to do — this job is finished or locked.',
+              textAlign: TextAlign.center,
+            ),
+        ],
       ),
     );
   }

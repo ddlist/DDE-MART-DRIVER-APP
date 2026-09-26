@@ -14,6 +14,7 @@ import 'features/account/safety_profile.dart';
 import 'features/auth/driver_login_screen.dart';
 import 'features/chat/driver_chat.dart';
 import 'features/documents/documents.dart';
+import 'features/info/driver_info.dart';
 import 'features/jobs/jobs.dart';
 import 'features/payouts/payouts.dart';
 
@@ -66,6 +67,13 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state, child) => DriverShell(child: child),
         routes: [
           GoRoute(path: '/jobs', builder: (context, state) => const JobsScreen()),
+          GoRoute(
+            path: '/job-detail',
+            builder: (context, state) {
+              final args = state.extra! as (DriverJob, bool);
+              return JobDetailScreen(job: args.$1, owned: args.$2);
+            },
+          ),
           GoRoute(path: '/payouts', builder: (context, state) => const PayoutsScreen()),
           GoRoute(path: '/documents', builder: (context, state) => const DocumentsScreen()),
           GoRoute(path: '/chat', builder: (context, state) => const DriverChatThreadsScreen()),
@@ -80,6 +88,21 @@ final routerProvider = Provider<GoRouter>((ref) {
         ],
       ),
       GoRoute(path: '/login', builder: (context, state) => const DriverLoginScreen()),
+      GoRoute(
+        path: '/onboarding',
+        builder: (context, state) => const DriverOnboardingScreen(),
+      ),
+      GoRoute(
+        path: '/profile/edit',
+        builder: (context, state) => const EditDriverProfileScreen(),
+      ),
+      GoRoute(path: '/pages', builder: (context, state) => const DriverPagesScreen()),
+      GoRoute(
+        path: '/page/:slug',
+        builder: (context, state) => DriverPageDetailScreen(
+          slug: state.pathParameters['slug']!,
+        ),
+      ),
       GoRoute(path: '/maintenance', builder: (context, state) => const MaintenanceScreen()),
       GoRoute(path: '/update', builder: (context, state) => const UpdateScreen()),
     ],
