@@ -4,4 +4,7 @@
          to allow setting breakpoints, to provide hot reload, etc.
     -->
     <uses-permission android:name="android.permission.INTERNET"/>
+    <!-- DEBUG ONLY: allow plain-HTTP API hosts (LAN dev servers like
+         http://192.168.x.x:8000). Release builds keep the secure default. -->
+    <application android:usesCleartextTraffic="true" />
 </manifest>
