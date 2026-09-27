@@ -9,6 +9,7 @@ import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../core/api_client.dart';
+import '../../core/nav.dart';
 
 final driverOnboardingProvider =
     FutureProvider<List<Map<String, dynamic>>>((ref) async {
@@ -188,7 +189,7 @@ class DriverPagesScreen extends ConsumerWidget {
                   child: ListTile(
                     title: Text('${row['name']}'),
                     trailing: const Icon(Icons.chevron_right),
-                    onTap: () => context.push('/page/${row['slug']}'),
+                    onTap: () => context.safePush('/page/${row['slug']}'),
                   ),
                 ),
             ],

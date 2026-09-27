@@ -25,6 +25,7 @@ class DdeDriverApp extends ConsumerWidget {
       debugShowCheckedModeBanner: false,
       theme: DdeTheme.light(),
       darkTheme: DdeTheme.dark(),
+      themeMode: ref.watch(themeModeProvider),
       routerConfig: router,
     );
   }

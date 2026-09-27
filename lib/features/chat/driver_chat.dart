@@ -6,9 +6,9 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 
 import '../../core/api_client.dart';
+import '../../core/nav.dart';
 
 Map<String, dynamic> _item(Map e) => Map<String, dynamic>.from(e);
 
@@ -76,7 +76,7 @@ class DriverChatThreadsScreen extends ConsumerWidget {
                     title: Text('${row['subject'] ?? 'Conversation'}'),
                     subtitle: Text('${row['last_message'] ?? ''}'),
                     trailing: const Icon(Icons.chevron_right),
-                    onTap: () => context.push('/chat/${row['id']}'),
+                    onTap: () => context.safePush('/chat/${row['id']}'),
                   ),
                 ),
             ],

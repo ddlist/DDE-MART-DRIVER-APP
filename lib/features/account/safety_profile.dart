@@ -10,9 +10,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:go_router/go_router.dart';
 
+import 'package:package_info_plus/package_info_plus.dart';
+
 import '../../core/api_client.dart';
 import '../../core/auth_store.dart';
+import '../../core/nav.dart';
 import '../../core/push.dart';
+import '../../core/theme.dart';
+import '../../core/widgets.dart';
 import '../auth/driver_auth_api.dart';
 import '../jobs/jobs.dart';
 
@@ -134,67 +139,183 @@ class DriverProfileScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final auth = ref.watch(authStoreProvider);
+    final themeMode = ref.watch(themeModeProvider);
 
     return FutureBuilder<Map<String, dynamic>>(
       future: ref.watch(jobsApiProvider).profile(),
       builder: (context, snapshot) {
         final profile = snapshot.data;
         final online = (profile?['is_online'] ?? false) == true;
+        final name = '${profile?['name'] ?? auth.name ?? 'Driver'}';
+        final initial =
+            name.trim().isEmpty ? '?' : name.trim()[0].toUpperCase();
 
         return ListView(
-          padding: const EdgeInsets.all(20),
+          padding: const EdgeInsets.all(16),
           children: [
-            Text(
-              '${profile?['name'] ?? auth.name ?? ''}',
-              style: Theme.of(context).textTheme.headlineSmall,
+            if (snapshot.hasError) Text(apiMessage(snapshot.error!)),
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Row(
+                  children: [
+                    CircleAvatar(
+                      radius: 28,
+                      child: Text(initial,
+                          style: Theme.of(context)
+                              .textTheme
+                              .headlineSmall),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment:
+                            CrossAxisAlignment.start,
+                        children: [
+                          Text(name,
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .titleLarge),
+                          Text(
+                              '${profile?['phone'] ?? auth.phone ?? ''}'),
+                          Row(
+                            children: [
+                              StatusChip(
+                                  status:
+                                      '${profile?['status'] ?? '…'}'),
+                              const SizedBox(width: 6),
+                              StatusChip(
+                                  status: online
+                                      ? 'online'
+                                      : 'offline'),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.edit_outlined),
+                      tooltip: 'Edit profile',
+                      onPressed: () =>
+                          context.safePush('/profile/edit'),
+                    ),
+                  ],
+                ),
+              ),
             ),
-            Text('${profile?['phone'] ?? auth.phone ?? ''}'),
-            Text('Status: ${profile?['status'] ?? '…'}'),
             if ('${profile?['vehicle_info'] ?? ''}'.isNotEmpty)
-              Text('Vehicle: ${profile?['vehicle_info']}'),
-            const SizedBox(height: 8),
-            OutlinedButton.icon(
-              icon: const Icon(Icons.edit_outlined),
-              label: const Text('Edit name & vehicle'),
-              onPressed: () => context.push('/profile/edit'),
-            ),
-            const SizedBox(height: 8),
-            OutlinedButton.icon(
-              icon: const Icon(Icons.help_outline),
-              label: const Text('Help & policies'),
-              onPressed: () => context.push('/pages'),
-            ),
-            const SizedBox(height: 8),
-            SwitchListTile(
-              title: const Text('Online for jobs'),
-              value: online,
-              onChanged: snapshot.hasData
-                  ? (value) async {
-                      try {
-                        await ref.read(jobsApiProvider).availability(value);
-                        ref.invalidate(jobsProvider);
-                        if (context.mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(value ? 'You are online.' : 'You are offline.'),
-                            ),
-                          );
-                        }
-                      } catch (e) {
-                        if (context.mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text(apiMessage(e))),
-                          );
+              Card(
+                child: ListTile(
+                  leading:
+                      const Icon(Icons.two_wheeler_outlined),
+                  title: const Text('Vehicle'),
+                  subtitle:
+                      Text('${profile?['vehicle_info']}'),
+                ),
+              ),
+            Card(
+              child: SwitchListTile(
+                title: const Text('Online for jobs'),
+                subtitle: const Text(
+                    'Offers only arrive while online'),
+                value: online,
+                onChanged: snapshot.hasData
+                    ? (value) async {
+                        try {
+                          await ref
+                              .read(jobsApiProvider)
+                              .availability(value);
+                          ref.invalidate(jobsProvider);
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context)
+                                .showSnackBar(
+                              SnackBar(
+                                content: Text(value
+                                    ? 'You are online.'
+                                    : 'You are offline.'),
+                              ),
+                            );
+                          }
+                        } catch (e) {
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context)
+                                .showSnackBar(
+                              SnackBar(
+                                  content:
+                                      Text(apiMessage(e))),
+                            );
+                          }
                         }
                       }
-                    }
-                  : null,
+                    : null,
+              ),
+            ),
+            const SizedBox(height: 4),
+            const _LocationPing(),
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment:
+                      CrossAxisAlignment.start,
+                  children: [
+                    Text('Appearance',
+                        style: Theme.of(context)
+                            .textTheme
+                            .titleSmall),
+                    const SizedBox(height: 8),
+                    SegmentedButton<ThemeMode>(
+                      segments: const [
+                        ButtonSegment(
+                            value: ThemeMode.system,
+                            label: Text('Auto')),
+                        ButtonSegment(
+                            value: ThemeMode.light,
+                            label: Text('Light')),
+                        ButtonSegment(
+                            value: ThemeMode.dark,
+                            label: Text('Dark')),
+                      ],
+                      selected: {themeMode},
+                      onSelectionChanged: (set) => ref
+                          .read(themeModeProvider.notifier)
+                          .set(set.first),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            Card(
+              child: ListTile(
+                leading: const Icon(Icons.help_outline),
+                title: const Text('Help & policies'),
+                trailing:
+                    const Icon(Icons.chevron_right),
+                onTap: () => context.safePush('/pages'),
+              ),
             ),
             const SizedBox(height: 8),
-            const _LocationPing(),
-            const SizedBox(height: 16),
             FilledButton.tonal(
               onPressed: () async {
+                final confirm = await showDialog<bool>(
+                  context: context,
+                  builder: (context) => AlertDialog(
+                    title: const Text('Sign out?'),
+                    actions: [
+                      TextButton(
+                        onPressed: () =>
+                            Navigator.pop(context, false),
+                        child: const Text('Stay'),
+                      ),
+                      FilledButton(
+                        onPressed: () =>
+                            Navigator.pop(context, true),
+                        child: const Text('Sign out'),
+                      ),
+                    ],
+                  ),
+                );
+                if (confirm != true || !context.mounted) return;
                 try {
                   await ref.read(driverAuthApiProvider).logout();
                 } finally {
@@ -205,7 +326,29 @@ class DriverProfileScreen extends ConsumerWidget {
               },
               child: const Text('Sign out'),
             ),
+            const SizedBox(height: 16),
+            const _VersionFooter(),
           ],
+        );
+      },
+    );
+  }
+}
+
+class _VersionFooter extends StatelessWidget {
+  const _VersionFooter();
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<PackageInfo>(
+      future: PackageInfo.fromPlatform(),
+      builder: (context, snapshot) {
+        final version = snapshot.data?.version ?? '';
+        return Center(
+          child: Text(
+            version.isEmpty ? '' : 'v$version',
+            style: Theme.of(context).textTheme.bodySmall,
+          ),
         );
       },
     );
