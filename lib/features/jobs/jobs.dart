@@ -4,6 +4,8 @@
 // {type, id, number, status, total}. Accept claims a pool job; transition
 // advances an owned job (accepted → ongoing → completed).
 
+// ignore_for_file: use_null_aware_elements
+
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -76,7 +78,6 @@ class JobsApi {
   }
 
   Future<void> updateProfile({String? name, String? vehicleInfo}) async {
-    // ignore: use_null_aware_operator
     await _dio.put('/driver/profile', data: {
       if (name case final n?) 'name': n,
       if (vehicleInfo case final v?) 'vehicle_info': v,
