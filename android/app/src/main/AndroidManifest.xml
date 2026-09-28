@@ -1,4 +1,9 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Push notifications (Android 13+ runtime request via FirebaseMessaging). -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!-- Gallery picks: Photo Picker needs nothing on API 33+; media read below 33. -->
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" />
     <application
         android:label="dde_driver"
         android:name="${applicationName}"

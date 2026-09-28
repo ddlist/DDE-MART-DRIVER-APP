@@ -17,6 +17,7 @@ import '../../core/api_client.dart';
 import '../../core/auth_store.dart';
 import '../../core/media_api.dart';
 import '../../core/nav.dart';
+import '../../core/permissions.dart';
 import '../../core/push.dart';
 import '../../core/theme.dart';
 import '../../core/widgets.dart';
@@ -620,6 +621,10 @@ class _EditDriverProfileScreenState
   }
 
   Future<void> _pickAvatar() async {
+    final allowed = await ref
+        .read(permissionServiceProvider)
+        .ensure(context, AppPermission.photos);
+    if (!allowed || !mounted) return;
     final picked = await _picker.pickImage(source: ImageSource.gallery);
     if (picked == null) return;
     setState(() => _uploading = true);

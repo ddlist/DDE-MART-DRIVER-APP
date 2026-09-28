@@ -10,6 +10,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../core/api_client.dart';
+import '../../core/permissions.dart';
 import '../../core/widgets.dart';
 
 class DocumentsApi {
@@ -95,6 +96,10 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
   }
 
   Future<void> _pickAndSubmit(Map<String, dynamic> type) async {
+    final allowed = await ref
+        .read(permissionServiceProvider)
+        .ensure(context, AppPermission.photos);
+    if (!allowed || !mounted) return;
     // Front photo is always collected as proof; back only when required.
     final front = await _picker.pickImage(source: ImageSource.gallery);
     if (front == null) return;

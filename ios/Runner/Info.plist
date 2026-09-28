@@ -16,6 +16,10 @@
 	<string>6.0</string>
 	<key>CFBundleName</key>
 	<string>dde_driver</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Your location is used for job dispatch, trip tracking, and SOS assistance.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Photo access is needed to upload your profile photo and verification documents.</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
