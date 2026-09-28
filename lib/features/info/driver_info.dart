@@ -1,4 +1,4 @@
-// DDE-Mart driver app — onboarding + help pages (original).
+// DDE-Mart driver app — onboarding + help pages.
 //
 // Onboarding slides from GET /onboarding?audience=driver (skipped when
 // none configured); public CMS pages viewer for terms/privacy.
@@ -10,6 +10,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../core/api_client.dart';
 import '../../core/nav.dart';
+import '../../core/theme.dart';
+import '../../core/widgets.dart';
 
 final driverOnboardingProvider =
     FutureProvider<List<Map<String, dynamic>>>((ref) async {
@@ -54,7 +56,18 @@ class _DriverOnboardingScreenState
     return Scaffold(
       body: SafeArea(
         child: slides.when(
-          loading: () => const Center(child: CircularProgressIndicator()),
+          loading: () => const Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                ShimmerBox(width: 200, height: 120, borderRadius: 24),
+                SizedBox(height: 16),
+                ShimmerBox(width: 240, height: 20, borderRadius: 10),
+                SizedBox(height: 8),
+                ShimmerBox(width: 180, height: 14, borderRadius: 8),
+              ],
+            ),
+          ),
           error: (e, _) => Center(
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -80,24 +93,46 @@ class _DriverOnboardingScreenState
                     itemBuilder: (context, index) {
                       final slide = rows[index];
                       return Padding(
-                        padding: const EdgeInsets.all(32),
+                        padding: const EdgeInsets.all(24),
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            const Icon(Icons.local_shipping_outlined, size: 120),
-                            const SizedBox(height: 32),
-                            Text(
-                              '${slide['title'] ?? ''}',
-                              textAlign: TextAlign.center,
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .headlineSmall
-                                  ?.copyWith(fontWeight: FontWeight.w800),
+                            Container(
+                              width: 160,
+                              height: 160,
+                              decoration: DdeTheme.headerGradient(
+                                context,
+                              ).copyWith(
+                                borderRadius: BorderRadius.circular(48),
+                                boxShadow:
+                                    DdeTheme.softShadow(context),
+                              ),
+                              child: const Icon(
+                                Icons.local_shipping_outlined,
+                                size: 84,
+                                color: Colors.white,
+                              ),
                             ),
-                            const SizedBox(height: 12),
-                            Text(
-                              '${slide['description'] ?? ''}',
-                              textAlign: TextAlign.center,
+                            const SizedBox(height: 32),
+                            SleekCard(
+                              child: Column(
+                                children: [
+                                  Text(
+                                    '${slide['title'] ?? ''}',
+                                    textAlign: TextAlign.center,
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .headlineSmall
+                                        ?.copyWith(
+                                            fontWeight: FontWeight.w800),
+                                  ),
+                                  const SizedBox(height: 12),
+                                  Text(
+                                    '${slide['description'] ?? ''}',
+                                    textAlign: TextAlign.center,
+                                  ),
+                                ],
+                              ),
                             ),
                           ],
                         ),
@@ -109,14 +144,27 @@ class _DriverOnboardingScreenState
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     for (var i = 0; i < rows.length; i++)
-                      Container(
-                        width: _page == i ? 20 : 8,
+                      AnimatedContainer(
+                        duration:
+                            const Duration(milliseconds: 220),
+                        width: _page == i ? 24 : 8,
                         height: 8,
-                        margin: const EdgeInsets.symmetric(horizontal: 3),
+                        margin: const EdgeInsets.symmetric(
+                            horizontal: 3),
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(4),
+                          gradient: _page == i
+                              ? LinearGradient(
+                                  colors: [
+                                    DdeTheme.accent,
+                                    Theme.of(context)
+                                        .colorScheme
+                                        .primary,
+                                  ],
+                                )
+                              : null,
                           color: _page == i
-                              ? Theme.of(context).colorScheme.primary
+                              ? null
                               : Theme.of(context)
                                   .colorScheme
                                   .surfaceContainerHighest,
@@ -128,7 +176,9 @@ class _DriverOnboardingScreenState
                   padding: const EdgeInsets.all(20),
                   child: Row(
                     children: [
-                      TextButton(onPressed: _finish, child: const Text('Skip')),
+                      TextButton(
+                          onPressed: _finish,
+                          child: const Text('Skip')),
                       const Spacer(),
                       FilledButton(
                         onPressed: () {
@@ -136,13 +186,16 @@ class _DriverOnboardingScreenState
                             _finish();
                           } else {
                             _controller.nextPage(
-                              duration: const Duration(milliseconds: 300),
+                              duration:
+                                  const Duration(milliseconds: 300),
                               curve: Curves.easeOut,
                             );
                           }
                         },
                         child: Text(
-                          _page == rows.length - 1 ? 'Get started' : 'Next',
+                          _page == rows.length - 1
+                              ? 'Get started'
+                              : 'Next',
                         ),
                       ),
                     ],
@@ -174,22 +227,54 @@ class DriverPagesScreen extends ConsumerWidget {
         }(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
+            return ListView(
+              padding: const EdgeInsets.all(16),
+              children: const [
+                ShimmerBox(height: 64, borderRadius: 20),
+                SizedBox(height: 8),
+                ShimmerBox(height: 64, borderRadius: 20),
+                SizedBox(height: 8),
+                ShimmerBox(height: 64, borderRadius: 20),
+              ],
+            );
           }
           if (snapshot.hasError) {
-            return Center(child: Text(apiMessage(snapshot.error!)));
+            return ErrorRetry(
+              error: snapshot.error!,
+              onRetry: () => (context as Element).markNeedsBuild(),
+            );
           }
           final rows = snapshot.data!;
-          if (rows.isEmpty) return const Center(child: Text('Nothing here.'));
+          if (rows.isEmpty) {
+            return const EmptyState(
+              message: 'Nothing here.',
+              icon: Icons.help_outline,
+            );
+          }
           return ListView(
             padding: const EdgeInsets.all(16),
             children: [
               for (final row in rows)
-                Card(
+                SleekCard(
+                  margin: const EdgeInsets.only(bottom: 10),
+                  padding: EdgeInsets.zero,
+                  onTap: () =>
+                      context.safePush('/page/${row['slug']}'),
                   child: ListTile(
+                    leading: Container(
+                      width: 44,
+                      height: 44,
+                      decoration: DdeTheme.iconTile(context),
+                      child: const Icon(
+                        Icons.article_outlined,
+                        color: Colors.white,
+                      ),
+                    ),
                     title: Text('${row['name']}'),
-                    trailing: const Icon(Icons.chevron_right),
-                    onTap: () => context.safePush('/page/${row['slug']}'),
+                    trailing: Icon(
+                      Icons.chevron_right,
+                      color: Theme.of(context).colorScheme.outline,
+                    ),
                   ),
                 ),
             ],
@@ -219,23 +304,47 @@ class DriverPageDetailScreen extends ConsumerWidget {
         }(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
+            return ListView(
+              padding: const EdgeInsets.all(20),
+              children: const [
+                ShimmerBox(width: 200, height: 28, borderRadius: 8),
+                SizedBox(height: 12),
+                ShimmerBox(height: 14, borderRadius: 8),
+                SizedBox(height: 8),
+                ShimmerBox(height: 14, borderRadius: 8),
+                SizedBox(height: 8),
+                ShimmerBox(height: 14, borderRadius: 8),
+              ],
+            );
           }
           if (snapshot.hasError) {
-            return Center(child: Text(apiMessage(snapshot.error!)));
+            return ErrorRetry(
+              error: snapshot.error!,
+              onRetry: () => (context as Element).markNeedsBuild(),
+            );
           }
           final page = snapshot.data!;
           return ListView(
-            padding: const EdgeInsets.all(20),
+            padding: const EdgeInsets.all(16),
             children: [
-              Text(
-                '${page['name'] ?? ''}',
-                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                      fontWeight: FontWeight.w800,
+              SleekCard(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '${page['name'] ?? ''}',
+                      style: Theme.of(context)
+                          .textTheme
+                          .headlineSmall
+                          ?.copyWith(
+                            fontWeight: FontWeight.w800,
+                          ),
                     ),
+                    const SizedBox(height: 12),
+                    Text('${page['body'] ?? ''}'),
+                  ],
+                ),
               ),
-              const SizedBox(height: 12),
-              Text('${page['body'] ?? ''}'),
             ],
           );
         },

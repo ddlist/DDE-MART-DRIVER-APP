@@ -19,23 +19,59 @@ class AuthHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(24, 40, 24, 32),
-      decoration: DdeTheme.headerGradient(context),
+      padding: const EdgeInsets.fromLTRB(24, 64, 24, 36),
+      decoration: DdeTheme.headerGradient(context).copyWith(
+        borderRadius: const BorderRadius.vertical(
+          bottom: Radius.circular(DdeTheme.radiusSheet),
+        ),
+        boxShadow: DdeTheme.softShadow(context),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            width: 52,
-            height: 52,
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.2),
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: const Icon(
-              Icons.local_shipping_outlined,
-              color: Colors.white,
-              size: 30,
-            ),
+          Row(
+            children: [
+              Container(
+                width: 52,
+                height: 52,
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.2),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: const Icon(
+                  Icons.local_shipping_outlined,
+                  color: Colors.white,
+                  size: 30,
+                ),
+              ),
+              const Spacer(),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      DdeTheme.accent,
+                      DdeTheme.accent.withValues(alpha: 0.75),
+                    ],
+                  ),
+                  borderRadius: BorderRadius.circular(
+                    DdeTheme.radiusPill,
+                  ),
+                ),
+                child: const Text(
+                  'DRIVER',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 2,
+                  ),
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 16),
           Text(

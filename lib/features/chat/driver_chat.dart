@@ -1,4 +1,4 @@
-// DDE-Mart driver app — support chat inbox (original).
+// DDE-Mart driver app — support chat inbox.
 //
 // Threads linked to this driver (customer opened from an order number),
 // with reply. Matches GET|POST /driver/chat/threads*.
@@ -9,6 +9,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/api_client.dart';
 import '../../core/nav.dart';
+import '../../core/theme.dart';
+import '../../core/widgets.dart';
 
 Map<String, dynamic> _item(Map e) => Map<String, dynamic>.from(e);
 
@@ -52,37 +54,105 @@ class DriverChatThreadsScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Messages')),
-      body: FutureBuilder<List<Map<String, dynamic>>>(
-        future: ref.watch(driverChatApiProvider).threads(),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
-          if (snapshot.hasError) {
-            return Center(child: Text(apiMessage(snapshot.error!)));
-          }
-          final rows = snapshot.data!;
-          if (rows.isEmpty) {
-            return const Center(child: Text('No messages from customers.'));
-          }
-          return ListView(
-            padding: const EdgeInsets.all(16),
-            children: [
-              for (final row in rows)
-                Card(
-                  child: ListTile(
-                    title: Text('${row['subject'] ?? 'Conversation'}'),
-                    subtitle: Text('${row['last_message'] ?? ''}'),
-                    trailing: const Icon(Icons.chevron_right),
-                    onTap: () => context.safePush('/chat/${row['id']}'),
-                  ),
-                ),
-            ],
-          );
-        },
-      ),
+    return Column(
+      children: [
+        const GradientHeader(
+          title: 'Messages',
+          subtitle: 'Customer conversations on your jobs.',
+          icon: Icons.chat_outlined,
+        ),
+        Expanded(
+          child: FutureBuilder<List<Map<String, dynamic>>>(
+            future: ref.watch(driverChatApiProvider).threads(),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return ListView(
+                  padding: const EdgeInsets.all(16),
+                  children: const [
+                    ShimmerBox(height: 76, borderRadius: 20),
+                    SizedBox(height: 8),
+                    ShimmerBox(height: 76, borderRadius: 20),
+                    SizedBox(height: 8),
+                    ShimmerBox(height: 76, borderRadius: 20),
+                  ],
+                );
+              }
+              if (snapshot.hasError) {
+                return ErrorRetry(
+                  error: snapshot.error!,
+                  onRetry: () => (context as Element).markNeedsBuild(),
+                );
+              }
+              final rows = snapshot.data!;
+              if (rows.isEmpty) {
+                return const EmptyState(
+                  message: 'No messages from customers.',
+                  icon: Icons.chat_bubble_outline,
+                );
+              }
+              return ListView(
+                padding: const EdgeInsets.all(16),
+                children: [
+                  for (final row in rows)
+                    SleekCard(
+                      margin: const EdgeInsets.only(bottom: 10),
+                      padding: const EdgeInsets.all(12),
+                      onTap: () =>
+                          context.safePush('/chat/${row['id']}'),
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 46,
+                            height: 46,
+                            decoration:
+                                DdeTheme.iconTile(context, radius: 15),
+                            child: const Icon(
+                              Icons.person_outline,
+                              color: Colors.white,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment:
+                                  CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  '${row['subject'] ?? 'Conversation'}',
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .titleSmall,
+                                ),
+                                Text(
+                                  '${row['last_message'] ?? ''}',
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .bodySmall
+                                      ?.copyWith(
+                                        color: Theme.of(context)
+                                            .colorScheme
+                                            .onSurfaceVariant,
+                                      ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          Icon(
+                            Icons.chevron_right,
+                            color:
+                                Theme.of(context).colorScheme.outline,
+                          ),
+                        ],
+                      ),
+                    ),
+                ],
+              );
+            },
+          ),
+        ),
+      ],
     );
   }
 }
@@ -148,6 +218,7 @@ class _DriverChatThreadScreenState
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
     final messages = _thread == null ? [] : _list(_thread!['messages']);
 
     return Scaffold(
@@ -156,46 +227,105 @@ class _DriverChatThreadScreenState
         children: [
           Expanded(
             child: _loading
-                ? const Center(child: CircularProgressIndicator())
+                ? ListView(
+                    padding: const EdgeInsets.all(16),
+                    children: const [
+                      ShimmerBox(height: 56, borderRadius: 18),
+                      SizedBox(height: 8),
+                      ShimmerBox(height: 56, borderRadius: 18),
+                      SizedBox(height: 8),
+                      ShimmerBox(height: 56, borderRadius: 18),
+                    ],
+                  )
                 : messages.isEmpty
-                    ? const Center(child: Text('No messages yet.'))
+                    ? const EmptyState(
+                        message: 'No messages yet. Say hello!',
+                        icon: Icons.chat_bubble_outline,
+                      )
                     : ListView(
                         padding: const EdgeInsets.all(16),
                         children: [
                           for (final message in messages)
                             Align(
-                              alignment: (message['from_me'] ?? false) == true
-                                  ? Alignment.centerRight
-                                  : Alignment.centerLeft,
-                              child: Card(
-                                color: (message['from_me'] ?? false) == true
-                                    ? Colors.blue.shade100
-                                    : null,
-                                child: Padding(
-                                  padding: const EdgeInsets.all(12),
-                                  child: Text('${message['body']}'),
+                              alignment:
+                                  (message['from_me'] ?? false) == true
+                                      ? Alignment.centerRight
+                                      : Alignment.centerLeft,
+                              child: Container(
+                                margin:
+                                    const EdgeInsets.only(bottom: 8),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 14,
+                                  vertical: 10,
+                                ),
+                                constraints: BoxConstraints(
+                                  maxWidth:
+                                      MediaQuery.of(context).size.width *
+                                          0.75,
+                                ),
+                                decoration: BoxDecoration(
+                                  gradient: (message['from_me'] ??
+                                              false) ==
+                                          true
+                                      ? LinearGradient(
+                                          colors: [
+                                            scheme.primary,
+                                            DdeTheme.primaryDark,
+                                          ],
+                                        )
+                                      : null,
+                                  color: (message['from_me'] ?? false) ==
+                                          true
+                                      ? null
+                                      : scheme.surfaceContainerHighest
+                                          .withValues(alpha: 0.6),
+                                  borderRadius: BorderRadius.circular(18),
+                                  boxShadow: DdeTheme.softShadow(context),
+                                ),
+                                child: Text(
+                                  '${message['body']}',
+                                  style: TextStyle(
+                                    color: (message['from_me'] ??
+                                                false) ==
+                                            true
+                                        ? Colors.white
+                                        : scheme.onSurface,
+                                  ),
                                 ),
                               ),
                             ),
                         ],
                       ),
           ),
-          Padding(
-            padding: const EdgeInsets.all(12),
-            child: Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: _message,
-                    decoration: const InputDecoration(labelText: 'Reply'),
-                    onSubmitted: (_) => _send(),
+          SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.all(12),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: _message,
+                      decoration: const InputDecoration(
+                        labelText: 'Reply',
+                        prefixIcon: Icon(Icons.message_outlined),
+                      ),
+                      onSubmitted: (_) => _send(),
+                    ),
                   ),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.send),
-                  onPressed: _busy ? null : _send,
-                ),
-              ],
+                  const SizedBox(width: 8),
+                  Container(
+                    decoration:
+                        DdeTheme.headerGradient(context).copyWith(
+                      shape: BoxShape.circle,
+                      boxShadow: DdeTheme.softShadow(context),
+                    ),
+                    child: IconButton(
+                      icon: const Icon(Icons.send, color: Colors.white),
+                      onPressed: _busy ? null : _send,
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ],

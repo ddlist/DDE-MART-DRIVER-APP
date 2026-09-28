@@ -10,6 +10,7 @@ import 'core/api_client.dart';
 import 'core/auth_store.dart';
 import 'core/config.dart';
 import 'core/gate.dart';
+import 'core/widgets.dart';
 import 'features/account/safety_profile.dart';
 import 'features/auth/driver_login_screen.dart';
 import 'features/chat/driver_chat.dart';
@@ -155,9 +156,9 @@ class DriverShell extends StatelessWidget {
 
     return Scaffold(
       body: SafeArea(child: child),
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: index,
-        onDestinationSelected: (value) {
+      bottomNavigationBar: DdeBottomBar(
+        index: index,
+        onTap: (value) {
           switch (value) {
             case 0:
               context.go('/jobs');
@@ -173,13 +174,13 @@ class DriverShell extends StatelessWidget {
               context.go('/profile');
           }
         },
-        destinations: const [
-          NavigationDestination(icon: Icon(Icons.work_outline), label: 'Jobs'),
-          NavigationDestination(icon: Icon(Icons.payments_outlined), label: 'Payouts'),
-          NavigationDestination(icon: Icon(Icons.badge_outlined), label: 'Docs'),
-          NavigationDestination(icon: Icon(Icons.chat_outlined), label: 'Chat'),
-          NavigationDestination(icon: Icon(Icons.sos_outlined), label: 'SOS'),
-          NavigationDestination(icon: Icon(Icons.person_outline), label: 'Profile'),
+        items: [
+          DdeBarItem(icon: Icons.work_outline, label: 'Jobs'),
+          DdeBarItem(icon: Icons.payments_outlined, label: 'Payouts'),
+          DdeBarItem(icon: Icons.badge_outlined, label: 'Docs'),
+          DdeBarItem(icon: Icons.chat_outlined, label: 'Chat'),
+          DdeBarItem(icon: Icons.sos_outlined, label: 'SOS'),
+          DdeBarItem(icon: Icons.person_outline, label: 'Profile'),
         ],
       ),
     );
@@ -195,18 +196,40 @@ class MaintenanceScreen extends ConsumerWidget {
       body: Center(
         child: Padding(
           padding: const EdgeInsets.all(32),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(Icons.construction_outlined, size: 64),
-              const SizedBox(height: 16),
-              const Text('DDE-Mart is under maintenance', textAlign: TextAlign.center),
-              const SizedBox(height: 16),
-              FilledButton(
-                onPressed: () => ref.invalidate(launchGateProvider),
-                child: const Text('Retry'),
-              ),
-            ],
+          child: SleekCard(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 72,
+                  height: 72,
+                  decoration: BoxDecoration(
+                    color: Theme.of(context)
+                        .colorScheme
+                        .primaryContainer,
+                    borderRadius: BorderRadius.circular(22),
+                  ),
+                  child: Icon(
+                    Icons.construction_outlined,
+                    size: 38,
+                    color: Theme.of(context)
+                        .colorScheme
+                        .onPrimaryContainer,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  'DDE-Mart is under maintenance',
+                  textAlign: TextAlign.center,
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+                const SizedBox(height: 16),
+                FilledButton(
+                  onPressed: () => ref.invalidate(launchGateProvider),
+                  child: const Text('Retry'),
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -219,17 +242,39 @@ class UpdateScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(
+    return Scaffold(
       body: Center(
         child: Padding(
-          padding: EdgeInsets.all(32),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(Icons.system_update_outlined, size: 64),
-              SizedBox(height: 16),
-              Text('Please update DDE Driver to continue.', textAlign: TextAlign.center),
-            ],
+          padding: const EdgeInsets.all(32),
+          child: SleekCard(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 72,
+                  height: 72,
+                  decoration: BoxDecoration(
+                    color: Theme.of(context)
+                        .colorScheme
+                        .primaryContainer,
+                    borderRadius: BorderRadius.circular(22),
+                  ),
+                  child: Icon(
+                    Icons.system_update_outlined,
+                    size: 38,
+                    color: Theme.of(context)
+                        .colorScheme
+                        .onPrimaryContainer,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  'Please update DDE Driver to continue.',
+                  textAlign: TextAlign.center,
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+              ],
+            ),
           ),
         ),
       ),
