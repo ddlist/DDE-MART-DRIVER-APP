@@ -77,3 +77,9 @@ WhatsApp **@shareeq9**.
 ## Credits
 
 Built by [DDLIST](https://ddlist.github.io).
+
+## License
+
+DDLIST Source-Available License v1.0 — see [LICENSE](LICENSE). You may
+use and modify the software for personal or business use, but you may
+not resell or redistribute it.
