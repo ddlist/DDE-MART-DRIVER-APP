@@ -80,6 +80,6 @@ Built by [DDLIST](https://ddlist.github.io).
 
 ## License
 
-DDLIST Source-Available License v1.0 — see [LICENSE](LICENSE). You may
-use and modify the software for personal or business use, but you may
-not resell or redistribute it.
+DDLIST Commercial Source License v1.0 — see [LICENSE](LICENSE). You may
+use, run, edit, and modify the software for personal or business use,
+but you may not resell, redistribute, or republish it.
